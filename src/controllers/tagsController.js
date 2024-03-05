@@ -3,7 +3,11 @@ const knex = require('../database/knex/index')
 
 
 class TagsController {
-    create(request, response) {
+    async create(request, response) {
         const { name } = request.body
+
+        await knex('tags').insert({ name })
     }
 }
+
+module.exports = TagsController
