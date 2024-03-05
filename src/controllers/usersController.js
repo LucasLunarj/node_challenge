@@ -1,28 +1,26 @@
 const { request, response } = require('express')
+const { hash, compare } = require('bcryptjs')
 const knex = require('../database/knex/index')
 const AppError = require('../utils/AppError.js')
 
 class UsersController {
     async create(request, response) {
-        const { name, email, password } = request.body
-        const isThisEmailRegistered = await knex('users').where({ email })
-        const filtered = isThisEmailRegistered.filter((item) => item.email == email)
+        const { name, email } = request.body
+        const isThisEmailRegistered = await knex('users').where({ email }).first()
+        const password = await hash(request.body.password, 8)
 
+        console.log(isThisEmailRegistered)
 
-        isThisEmailRegistered.map(async item => {
-            if (item.email === email) {
-                console.log('email existe')
-                return;
-            }
-        })
-
-
-        await knex("users").insert({
-            name,
-            email,
-            password
-        })
-
+        if (isThisEmailRegistered) {
+            console.log('email registrado')
+            return
+        } else {
+            await knex("users").insert({
+                name,
+                email,
+                password
+            })
+        }
 
         response.json()
     }
@@ -32,6 +30,17 @@ class UsersController {
         await knex("users").where({ id }).delete()
 
         return response.json()
+    }
+
+    async show(request, response) {
+        const { id } = request.params
+        const users = await knex('users').where({ id })
+        const moviesRegistered = await knex('movies').where({ user_id: id })
+
+        return response.json({
+            ...users,
+            moviesRegistered
+        })
     }
 }
 
